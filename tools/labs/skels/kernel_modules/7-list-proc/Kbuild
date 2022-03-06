@@ -1,0 +1,3 @@
+ccflags-y = -g
+
+obj-m = list_proc.o
