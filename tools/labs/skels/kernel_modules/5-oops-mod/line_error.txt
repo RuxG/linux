@@ -1,1 +1,0 @@
-EIP: my_oops_init+0xd/0x22 [oops_mod]

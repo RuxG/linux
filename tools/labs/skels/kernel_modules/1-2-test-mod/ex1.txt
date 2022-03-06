@@ -1,0 +1,11 @@
+insmod hello_mod.ko
+-se afiseaza Hello in consola
+
+rmmod hello_mod.ko
+-se afiseaza Goodbye in consola
+
+-pt a nu se afisa mesajul in consola, am schimbat nivelul de log al consolei scriind "7" in /proc/sys/kernel/printk
+
+
+
+

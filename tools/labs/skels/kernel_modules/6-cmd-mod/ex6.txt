@@ -1,0 +1,2 @@
+-pentru a se afisa mesajul dorit, am inserat modulul astfel: 
+insmod cmd_mod.ko str="tired"
