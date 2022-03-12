@@ -25,6 +25,9 @@ static struct task_info *task_info_alloc(int pid)
 	struct task_info *ti;
 
 	/* TODO 1: allocated and initialize a task_info struct */
+	ti = kmalloc(sizeof(pid_t) + sizeof(unsigned long), GFP_KERNEL);
+	ti->pid = pid;
+	ti->timestamp = jiffies;
 
 	return ti;
 }
@@ -32,12 +35,18 @@ static struct task_info *task_info_alloc(int pid)
 static int memory_init(void)
 {
 	/* TODO 2: call task_info_alloc for current pid */
+	ti1 = task_info_alloc(current->pid);
 
 	/* TODO 2: call task_info_alloc for parent PID */
+	ti2 = task_info_alloc(current->parent->pid);
 
 	/* TODO 2: call task_info alloc for next process PID */
+	
+	ti3 = task_info_alloc(next_task(current)->pid);
+
 
 	/* TODO 2: call task_info_alloc for next process of the next process */
+	ti4 = task_info_alloc(next_task(next_task(current))->pid);
 
 	return 0;
 }
@@ -46,8 +55,18 @@ static void memory_exit(void)
 {
 
 	/* TODO 3: print ti* field values */
+	pr_info("Current proc - pid: %d, timestamp: %ld\n", ti1->pid, ti1->timestamp);
+	pr_info("Parent proc - pid: %d, timestamp: %ld\n", ti2->pid, ti2->timestamp);
+
+	pr_info("Next proc - pid: %d, timestamp: %ld\n", ti3->pid, ti3->timestamp);
+
+	pr_info("Next next proc - pid: %d, timestamp: %ld\n", ti4->pid, ti4->timestamp);
 
 	/* TODO 4: free ti* structures */
+	kfree(ti1);
+	kfree(ti2);
+	kfree(ti3);
+	kfree(ti4);
 }
 
 module_init(memory_init);
