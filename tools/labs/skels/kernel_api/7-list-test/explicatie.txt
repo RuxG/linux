@@ -1,0 +1,1 @@
+modulul 6 nu poate fi scos daca modulul 7 este introdus deoarece este folosit de modulul 7
