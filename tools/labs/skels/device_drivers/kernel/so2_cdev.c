@@ -35,6 +35,7 @@ MODULE_LICENSE("GPL");
 
 struct so2_device_data {
 	/* TODO 2: add cdev member */
+	
 	/* TODO 4: add buffer with BUFSIZ elements */
 	/* TODO 7: extra members for home */
 	/* TODO 3: add atomic_t access variable to keep track if file is opened */
@@ -139,13 +140,17 @@ static int so2_cdev_init(void)
 	int i;
 
 	/* TODO 1: register char device region for MY_MAJOR and NUM_MINORS starting at MY_MINOR */
-	err = register_chrdev_region(MKDEV(MY_MAJOR, MY_MINOR), NUM_MINORS,
-			                             "so2_cdev");
+	err = register_chrdev_region(MKDEV(MY_MAJOR, MY_MINOR), NUM_MINORS, "so2_cdev");
+	//err = register_chrdev_region(MKDEV(7, MY_MINOR), NUM_MINORS, "so2_cdev");
+
+		
 	if (err != 0) {
 		    /* report error */
+		    pr_info("Error registering device: %d\n", err);
 		    return err;
+	} else {
+		pr_info("Registered chardev\n");
 	}
-	pr_info("Registered chardev\n");
 
 	for (i = 0; i < NUM_MINORS; i++) {
 #ifdef EXTRA
@@ -171,6 +176,7 @@ static void so2_cdev_exit(void)
 
 	/* TODO 1: unregister char device region, for MY_MAJOR and NUM_MINORS starting at MY_MINOR */
 	unregister_chrdev_region(MKDEV(MY_MAJOR, MY_MINOR), NUM_MINORS);
+	//unregister_chrdev_region(MKDEV(7, MY_MINOR), NUM_MINORS);
 	pr_info("Unregistered chardev\n");
 }
 
