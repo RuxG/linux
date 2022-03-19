@@ -8,4 +8,5 @@ insmod: can't insert 'so2_cdev.ko': Device or resource busy
 
 4) Daca incercam sa rulam 2 cat-uri succesive pe device, primim eroarea "can't open '/dev/so2_cdev': Device or resource busy".
 
+5) Daca implementam functia read fara sa updatam offset-ul in bufffer, nu se va ajunge niciodata la capatul fisierului, deci apelul read va citi incontinuu. 
 

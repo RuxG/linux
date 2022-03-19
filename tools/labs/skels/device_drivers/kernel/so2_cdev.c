@@ -37,6 +37,7 @@ struct so2_device_data {
 	/* TODO 2: add cdev member */
 	struct cdev cdev;	
 	/* TODO 4: add buffer with BUFSIZ elements */
+	char buffer[BUFSIZ];
 	/* TODO 7: extra members for home */
 	/* TODO 3: add atomic_t access variable to keep track if file is opened */
 	atomic_t is_open;
@@ -59,9 +60,11 @@ static int so2_cdev_open(struct inode *inode, struct file *file)
 	file->private_data = data;
 
 	/* TODO 3: return immediately if access is != 0, use atomic_cmpxchg */
-	if( atomic_cmpxchg(&(data->is_open), 0, 1) != 0) {
+	if(atomic_cmpxchg(&(data->is_open), 0, 1) != 0) {
 		return -EBUSY;
 	}
+
+
 
 	set_current_state(TASK_INTERRUPTIBLE);
 	schedule_timeout(10 * HZ);
@@ -92,14 +95,19 @@ so2_cdev_read(struct file *file,
 {
 	struct so2_device_data *data =
 		(struct so2_device_data *) file->private_data;
-	size_t to_read;
+	size_t to_read = min(BUFSIZ - *offset, size);
+	if (to_read <= 0) {
+		return 0;	
+	}
 
 #ifdef EXTRA
 	/* TODO 7: extra tasks for home */
 #endif
 
 	/* TODO 4: Copy data->buffer to user_buffer, use copy_to_user */
-
+	if (copy_to_user(user_buffer, data->buffer + *offset, to_read))
+		        return -EFAULT;
+	*offset += to_read;
 	return to_read;
 }
 
@@ -142,6 +150,7 @@ static const struct file_operations so2_fops = {
 	.open = so2_cdev_open,
 	.release = so2_cdev_release,
 /* TODO 4: add read function */
+	.read = so2_cdev_read,
 /* TODO 5: add write function */
 /* TODO 6: add ioctl function */
 };
@@ -170,6 +179,9 @@ static int so2_cdev_init(void)
 #else
 		/*TODO 4: initialize buffer with MESSAGE string */
 #endif
+
+		memcpy(devs[i].buffer, MESSAGE, strlen(MESSAGE) + 1);
+
 		/* TODO 7: extra tasks for home */
 		/* TODO 3: set access variable to 0, use atomic_set */
 
