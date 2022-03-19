@@ -1,0 +1,10 @@
+Daca inregistram device-ul cu un major care este deja folosit, primim urmatoarea eroare
+
+Error registering device: -16   
+insmod: can't insert 'so2_cdev.ko': Device or resource busy
+
+
+3) Daca nu specificam in structura fops implementarea functiilor open, release si read, se afiseaza un mesaj de eroare cand incercam sa citim din device.
+
+
+
