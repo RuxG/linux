@@ -6,5 +6,6 @@ insmod: can't insert 'so2_cdev.ko': Device or resource busy
 
 3) Daca nu specificam in structura fops implementarea functiilor open, release si read, se afiseaza un mesaj de eroare cand incercam sa citim din device.
 
+4) Daca incercam sa rulam 2 cat-uri succesive pe device, primim eroarea "can't open '/dev/so2_cdev': Device or resource busy".
 
 
