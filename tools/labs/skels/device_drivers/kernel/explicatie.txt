@@ -10,3 +10,4 @@ insmod: can't insert 'so2_cdev.ko': Device or resource busy
 
 5) Daca implementam functia read fara sa updatam offset-ul in bufffer, nu se va ajunge niciodata la capatul fisierului, deci apelul read va citi incontinuu. 
 
+6) Functia de test foloseste apelul de sistem ioctl si apeleaza macrodefinitia MY_IOCTL_PRINT, care afiseaza un mesaj.
