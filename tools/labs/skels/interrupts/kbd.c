@@ -140,6 +140,13 @@ static const struct file_operations kbd_fops = {
 	/* TODO 5: add write operation */
 };
 
+irqreturn_t kbd_interrupt_handler(int irq_no, void *dev_id) 
+{	
+	pr_info("Kbd interrupt handler called.\n");
+	return IRQ_NONE;
+}
+
+
 static int kbd_init(void)
 {
 	int err;
@@ -152,19 +159,28 @@ static int kbd_init(void)
 	}
 
 	/* TODO 1: request the keyboard I/O ports */
-	if (!request_region(I8042_DATA_REG + 1, 1, MODULE_NAME)) {
-		return -ENODEV;
+	err = request_region(I8042_DATA_REG + 1, 1, MODULE_NAME);
+	if (!err) {
+		goto out_unregister;
 	}
 
-	if (!request_region(I8042_STATUS_REG + 1, 1, MODULE_NAME)) {
+	err = request_region(I8042_STATUS_REG + 1, 1, MODULE_NAME);
+
+	if (!err) {
 		release_region(I8042_DATA_REG + 1, 1);
-		return -ENODEV;
+		goto out_unregister;
 	}
 
 
 	/* TODO 3: initialize spinlock */
 
 	/* TODO 2: Register IRQ handler for keyboard IRQ (IRQ 1). */
+	err = request_irq(I8042_KBD_IRQ, kbd_interrupt_handler, IRQF_SHARED, MODULE_NAME, &devs[0]);
+	if (err < 0) {
+		release_region(I8042_DATA_REG + 1, 1);
+		release_region(I8042_STATUS_REG + 1, 1);
+		goto out_unregister;
+	}	
 
 	cdev_init(&devs[0].cdev, &kbd_fops);
 	cdev_add(&devs[0].cdev, MKDEV(KBD_MAJOR, KBD_MINOR), 1);
@@ -186,7 +202,7 @@ static void kbd_exit(void)
 	cdev_del(&devs[0].cdev);
 
 	/* TODO 2: Free IRQ. */
-
+	free_irq(I8042_KBD_IRQ, &devs[0]);
 	/* TODO 1: release keyboard I/O ports */
 	release_region(I8042_DATA_REG + 1, 1);
 	release_region(I8042_STATUS_REG + 1, 1);
