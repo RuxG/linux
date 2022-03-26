@@ -1,3 +1,9 @@
 1) La boot, se inregistreaza regiunile porturilor 60 si 64 pentru cei 2 registrii ai tastaturii, deci primim eroare daca incercam sa inregistram din nou aceste 2 porturi in cadrul modulului.
 
 2) Am inregistrat handler-ul de intrerupere pentru tastatura, mentionand ca dorim ca linia de intrerupere sa fie sared cu driver-ul de tastatura existent.
+
+3) In handler-ul de intrerupere, identific tasta apasata si stochez caracterul in buffer-ul device-ului, avand grija sa asigur protectia accesului la buffer si si la indexuri folosind spinlock-ul din structura device-ului.
+
+4) In functia kbd_read, aloc memorie pentru un buffer in care sa citesc caracterele cerute, apoi copiez in buffer-ul din userspace folosind copy_to_user. Protejez accesul la buffer folosind spinlock-ul, avand grija sa dezactivez intreruperile pe procesor pentru ca handler-ul de intrerupere sa nu poata fi invocat si sa se ajunga la un live lock. 
+
+5) In functia kbd_write, resetez valorile indexurilor si a contorului device-ului, avand grija sa asigur protectia impotriva accesului concurent si impotriva live lock-ului. 

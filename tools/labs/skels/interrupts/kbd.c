@@ -8,7 +8,7 @@
 #include <linux/ioport.h>
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
-
+#include <linux/slab.h>
 MODULE_DESCRIPTION("KBD");
 MODULE_AUTHOR("Kernel Hacker");
 MODULE_LICENSE("GPL");
@@ -17,7 +17,7 @@ MODULE_LICENSE("GPL");
 
 #define KBD_MAJOR		42
 #define KBD_MINOR		0
-#define KBD_NR_MINORS	1
+#define KBD_NR_MINORS		1
 
 #define I8042_KBD_IRQ		1
 #define I8042_STATUS_REG	0x64
@@ -28,7 +28,7 @@ MODULE_LICENSE("GPL");
 
 struct kbd {
 	struct cdev cdev;
-	/* TODO 3: add spinlock */
+	spinlock_t lock;
 	char buf[BUFFER_SIZE];
 	size_t put_idx, get_idx, count;
 } devs[1];
@@ -76,18 +76,27 @@ static void put_char(struct kbd *data, char c)
 
 	data->buf[data->put_idx] = c;
 	data->put_idx = (data->put_idx + 1) % BUFFER_SIZE;
-	data->count++;
+	data->count = data->count + 1;
 }
 
 static bool get_char(char *c, struct kbd *data)
+
 {
-	/* TODO 4: get char from buffer; update count and get_idx */
-	return false;
+	if (data->count == 0) 
+		return false;
+
+	data->count = data->count - 1;
+	*c = data->buf[data->get_idx];
+	data->get_idx = (data->get_idx + 1) % BUFFER_SIZE;
+
+	return true;
 }
 
 static void reset_buffer(struct kbd *data)
 {
-	/* TODO 5: reset count, put_idx, get_idx */
+	data->count = 0;
+	data->put_idx = 0;
+	data->get_idx = 0;
 }
 
 /*
@@ -95,16 +104,11 @@ static void reset_buffer(struct kbd *data)
  */
 static inline u8 i8042_read_data(void)
 {
-	u8 val;
-	/* TODO 3: Read DATA register (8 bits). */
+	u8 val = 0;
+	val = inb(I8042_DATA_REG);
 	return val;
 }
 
-/* TODO 2: implement interrupt handler */
-	/* TODO 3: read the scancode */
-	/* TODO 3: interpret the scancode */
-	/* TODO 3: display information about the keystrokes */
-	/* TODO 3: store ASCII key to buffer */
 
 static int kbd_open(struct inode *inode, struct file *file)
 {
@@ -121,28 +125,85 @@ static int kbd_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-/* TODO 5: add write operation and reset the buffer */
 
-static ssize_t kbd_read(struct file *file,  char __user *user_buffer,
-			size_t size, loff_t *offset)
+static ssize_t kbd_read(struct file *file, char __user *user_buffer,
+	size_t size, loff_t *offset)
 {
 	struct kbd *data = (struct kbd *) file->private_data;
 	size_t read = 0;
-	/* TODO 4: read data from buffer */
+
+	char *c;
+	c = (char*)kmalloc(size + 1, GFP_KERNEL);
+	
+	unsigned long flags = 0;
+	spin_lock_irqsave(&(data->lock), flags);
+
+	while (read < size) {
+		bool ch = get_char(c + read, data);
+		if (!ch) break;
+		read++;
+	}	
+
+	spin_unlock_irqrestore(&(data->lock), flags);
+
+	if (copy_to_user(user_buffer, c, read)) {
+		kfree(c);
+		return -EFAULT;
+	}
+
+	
+	kfree(c);
+	*offset += read;
+
 	return read;
 }
+
+
+static ssize_t kbd_write(struct file *file, const char __user *user_buffer,
+		size_t size, loff_t *offset) {
+	
+	struct kbd *data = (struct kbd *) file->private_data;
+	unsigned long flags = 0;
+
+	spin_lock_irqsave(&(data->lock), flags);
+
+	reset_buffer(data);
+
+	spin_unlock_irqrestore(&(data->lock), flags);
+
+	*offset = 0;
+
+	return size;
+};
+
 
 static const struct file_operations kbd_fops = {
 	.owner = THIS_MODULE,
 	.open = kbd_open,
 	.release = kbd_release,
 	.read = kbd_read,
-	/* TODO 5: add write operation */
+	.write = kbd_write,
 };
 
-irqreturn_t kbd_interrupt_handler(int irq_no, void *dev_id) 
+static irqreturn_t kbd_interrupt_handler(int irq_no, void *dev_id) 
 {	
-	pr_info("Kbd interrupt handler called.\n");
+
+	unsigned int scancode = i8042_read_data();
+	int pressed = is_key_press(scancode);
+	if (pressed) {
+		unsigned int ch = get_ascii(scancode);	
+		struct kbd *data;
+		data = (struct kbd *) dev_id;
+		
+		spin_lock(&(data->lock));
+
+		put_char(data, ch);
+		
+		spin_unlock(&(data->lock));
+	}
+
+
+	
 	return IRQ_NONE;
 }
 
@@ -158,23 +219,17 @@ static int kbd_init(void)
 		goto out;
 	}
 
-	/* TODO 1: request the keyboard I/O ports */
-	err = request_region(I8042_DATA_REG + 1, 1, MODULE_NAME);
-	if (!err) {
+	if (!request_region(I8042_DATA_REG + 1, 1, MODULE_NAME)) {
 		goto out_unregister;
 	}
 
-	err = request_region(I8042_STATUS_REG + 1, 1, MODULE_NAME);
-
-	if (!err) {
+	if (!request_region(I8042_STATUS_REG + 1, 1, MODULE_NAME)) {
 		release_region(I8042_DATA_REG + 1, 1);
 		goto out_unregister;
 	}
 
+	spin_lock_init(&(devs[0].lock));
 
-	/* TODO 3: initialize spinlock */
-
-	/* TODO 2: Register IRQ handler for keyboard IRQ (IRQ 1). */
 	err = request_irq(I8042_KBD_IRQ, kbd_interrupt_handler, IRQF_SHARED, MODULE_NAME, &devs[0]);
 	if (err < 0) {
 		release_region(I8042_DATA_REG + 1, 1);
@@ -188,7 +243,6 @@ static int kbd_init(void)
 	pr_notice("Driver %s loaded\n", MODULE_NAME);
 	return 0;
 
-	/*TODO 2: release regions in case of error */
 
 out_unregister:
 	unregister_chrdev_region(MKDEV(KBD_MAJOR, KBD_MINOR),
@@ -201,9 +255,8 @@ static void kbd_exit(void)
 {
 	cdev_del(&devs[0].cdev);
 
-	/* TODO 2: Free IRQ. */
 	free_irq(I8042_KBD_IRQ, &devs[0]);
-	/* TODO 1: release keyboard I/O ports */
+
 	release_region(I8042_DATA_REG + 1, 1);
 	release_region(I8042_STATUS_REG + 1, 1);
 
