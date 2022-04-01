@@ -1,0 +1,1 @@
+4) Daca in handler-ul de timer setam procesul ca fiind interuptibil si executam o operatie blocanta, driverul cauzeaza o eroare deoarece nu e permis sa se faca schedule in context intrerupere.
