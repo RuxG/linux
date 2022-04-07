@@ -1,0 +1,8 @@
+Sincronizarea kthread-ului cu modulul se realizeaza prin coada de evenimente. Cand apeleaza wait_event, kthread-ul intra in starea
+UNINTERRUPTIBLE pana ce ii este semnalat ca conditia wk_stop_thread este adevarata. Cum el se afla in starea
+UNINTERRUPTIBLE, nu poate fi trezit de o intrerupere sau un semnal, deci nu e nevoie sa verificam la trezire
+ca conditia este adevarata (nu se poate trezi "din greseala"). Acelasi lucru se intampla si in functia de exit, 
+se asteapta ca kthread-ul sa semnaleze ca conditia s-a adeverit, ceea ce inseamna ca kthread-ul si-a terminat executia,
+inainte sa se scoata modulul.
+
+
