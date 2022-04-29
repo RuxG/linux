@@ -1,2 +1,5 @@
 1) Dupa inserarea modulului in kernel, in fisierul /proc/filesystems apare intrarea corespunzatoare tipului de sistem de fisiere nou definit, care are asociat tipul "no dev", ce specifica ca nu necesita un spatiu de stocare pe disc.
 2) Am setat proprietatile de block_size, block_size_bits, magic_number al tipului de sistem de fisiere in structura super_block. Montarea esueaza in continuare pentru ca nu este initializat root inode-ul.
+3) Am initializat inode-ul radacina, alocandu-i un numar de inode, file system uid si gid, si structurile inode_ops si fops.
+Ca urmare, acest tip de sistem de fisiere poate fi montat cu succes.
+
