@@ -123,15 +123,24 @@ static struct dentry *myfs_mount(struct file_system_type *fs_type,
 		int flags, const char *dev_name, void *data)
 {
 	/* TODO 1: call superblock mount function */
+	return mount_nodev(fs_type, flags, data, myfs_fill_super);
+
 }
 
 /* TODO 1: define file_system_type structure */
+static struct file_system_type myfs_fs_type = {
+        .name           = "myfs",
+        .mount          = myfs_mount,
+        .kill_sb        = kill_litter_super,
+        .fs_flags       = FS_USERNS_MOUNT,
+};
 
 static int __init myfs_init(void)
 {
 	int err;
 
 	/* TODO 1: register */
+	err = register_filesystem(&myfs_fs_type);
 	if (err) {
 		printk(LOG_LEVEL "register_filesystem failed\n");
 		return err;
@@ -143,7 +152,9 @@ static int __init myfs_init(void)
 static void __exit myfs_exit(void)
 {
 	/* TODO 1: unregister */
+	unregister_filesystem(&myfs_fs_type);
 }
+
 
 module_init(myfs_init);
 module_exit(myfs_exit);

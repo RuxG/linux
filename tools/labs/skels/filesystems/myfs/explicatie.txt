@@ -1,0 +1,1 @@
+1) Dupa inserarea modulului in kernel, in fisierul /proc/filesystems apare intrarea corespunzatoare tipului de sistem de fisiere nou definit, care are asociat tipul "no dev", ce specifica ca nu necesita un spatiu de stocare pe disc.
