@@ -482,12 +482,16 @@ static struct dentry *minfs_mount(struct file_system_type *fs_type,
 		int flags, const char *dev_name, void *data)
 {
 	/* TODO 1: call superblock mount function */
+	return mount_bdev(fs_type, flags, dev_name, data, minfs_fill_super);
 }
 
 static struct file_system_type minfs_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "minfs",
 	/* TODO 1: add mount, kill_sb and fs_flags */
+	.mount		= minfs_mount,
+	.kill_sb 	= kill_block_super,
+	.fs_flags 	= FS_REQUIRES_DEV,
 };
 
 static int __init minfs_init(void)
