@@ -243,14 +243,19 @@ static struct inode *minfs_alloc_inode(struct super_block *s)
 	struct minfs_inode_info *mii;
 
 	/* TODO 3: Allocate minfs_inode_info. */
-	/* TODO 3: init VFS inode in minfs_inode_info */
+	mii = kzalloc(sizeof(struct minfs_inode_info), GFP_KERNEL);
+	if (!mii)
+		return NULL;
 
+	/* TODO 3: init VFS inode in minfs_inode_info */
+	inode_init_once(&mii->vfs_inode);
 	return &mii->vfs_inode;
 }
 
 static void minfs_destroy_inode(struct inode *inode)
 {
 	/* TODO 3: free minfs_inode_info */
+	kfree(container_of(inode, struct minfs_inode_info, vfs_inode));
 }
 
 /*
