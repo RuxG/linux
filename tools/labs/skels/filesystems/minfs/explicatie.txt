@@ -1,3 +1,6 @@
 1) Am inregistrat tipul nou definit de sistem de fisiere, ca urmare el apare in /proc/filesystems fupa inserarea modulului. Folosesc mount_bdev
 pentru a specifica ca acest tip de sistem de fisiere are nevoie de un device de tip block. Montarea esueaza pentru ca inode-ul radacina nu este
 initializat.
+2) Populez structura super_block din kernel cu informatii aditionale din structura superblock de pe disc, verific ca numarul magic
+din structura de pe disc sa corespunda cu numarul magic definit in modul (pentru a verifica ca formatul discului este valid) si aloc
+si initializez o structura inode pentru root.

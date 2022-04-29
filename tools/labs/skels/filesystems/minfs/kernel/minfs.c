@@ -413,6 +413,55 @@ static const struct super_operations minfs_ops = {
 	/* TODO 7:	= set write_inode function. */
 };
 
+struct inode *myfs_get_inode(struct super_block *sb, const struct inode *dir,
+		int mode)
+{
+	struct inode *inode = new_inode(sb);
+
+	if (!inode)
+		return NULL;
+
+	/* TODO 3: fill inode structure
+	 *     - mode
+	 *     - uid
+	 *     - gid
+	 *     - atime,ctime,mtime
+	 *     - ino
+	 */
+
+	inode->i_ino = get_next_ino();
+	inode_init_owner(inode, NULL, mode);
+	inode->i_atime = current_time(inode);
+	inode->i_ctime = current_time(inode);
+	inode->i_mtime = current_time(inode);
+
+
+	/* TODO 5: Init i_ino using get_next_ino */
+
+	/* TODO 6: Initialize address space operations. */
+
+	if (S_ISDIR(mode)) {
+		/* TODO 3: set inode operations for dir inodes. */
+		inode->i_op = &simple_dir_inode_operations;
+		inode->i_fop = &simple_dir_operations;
+		/* TODO 5: use myfs_dir_inode_operations for inode
+		 * operations (i_op).
+		 */
+
+		/* TODO 3: directory inodes start off with i_nlink == 2 (for "." entry).
+		 * Directory link count should be incremented (use inc_nlink).
+		 */
+		inc_nlink(inode);
+	}
+
+	/* TODO 6: Set file inode and file operations for regular files
+	 * (use the S_ISREG macro).
+	 */
+
+	return inode;
+}
+
+
 static int minfs_fill_super(struct super_block *s, void *data, int silent)
 {
 	struct minfs_sb_info *sbi;
@@ -435,20 +484,30 @@ static int minfs_fill_super(struct super_block *s, void *data, int silent)
 	 * the device, i.e. the block with the index 0. This is the index
 	 * to be passed to sb_bread().
 	 */
-
+	bh = sb_bread(s, 0);
+	if (!bh)
+		goto out_bad_sb;
+	
 	/* TODO 2: interpret read data as minfs_super_block */
+	ms = (struct minfs_super_block *)bh->b_data;
 
 	/* TODO 2: check magic number with value defined in minfs.h. jump to out_bad_magic if not suitable */
+	if (ms->magic != MINFS_MAGIC)
+		goto out_bad_magic;
 
 	/* TODO 2: fill super_block with magic_number, super_operations */
+	s->s_magic = MINFS_MAGIC;
+	s->s_op = &minfs_ops;
 
 	/* TODO 2: Fill sbi with rest of information from disk superblock
 	 * (i.e. version).
 	 */
-
+	sbi->version = ms->version;
 	/* allocate root inode and root dentry */
 	/* TODO 2: use myfs_get_inode instead of minfs_iget */
-	root_inode = minfs_iget(s, MINFS_ROOT_INODE);
+	root_inode = myfs_get_inode(s, MINFS_ROOT_INODE, S_IFDIR | S_IRWXU | S_IRGRP |
+			S_IXGRP | S_IROTH | S_IXOTH);
+
 	if (!root_inode)
 		goto out_bad_inode;
 
