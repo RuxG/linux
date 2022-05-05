@@ -33,16 +33,35 @@ static void send_test_bio(struct block_device *bdev, int dir)
 	char *buf;
 
 	/* TODO 4: fill bio (bdev, sector, direction) */
-
+	bio->bi_disk = bdev->bd_disk;
+	bio->bi_iter.bi_sector = 0;
+	bio->bi_opf = dir;
 	page = alloc_page(GFP_NOIO);
 	bio_add_page(bio, page, KERNEL_SECTOR_SIZE, 0);
 
 	/* TODO 5: write message to bio buffer if direction is write */
 
+	if (dir == 1) {
+		buf = kmap_atomic(page);
+		memcpy(buf, BIO_WRITE_MESSAGE, strlen(BIO_WRITE_MESSAGE));
+		kunmap_atomic(buf);
+
+	}
+
 	/* TODO 4: submit bio and wait for completion */
+	if (submit_bio_wait(bio))
+		goto out;
 
 	/* TODO 4: read data (first 3 bytes) from bio buffer and print it */
+	struct bio_vec bvec;
+    struct bvec_iter i;
+	unsigned int data = 0;
 
+   	buf = kmap_atomic(page);
+	pr_info("Read %02x %02x %02x\n", buf[0], buf[1], buf[2]);
+	kunmap_atomic(buf);
+
+out:
 	bio_put(bio);
 	__free_page(page);
 }
@@ -52,6 +71,7 @@ static struct block_device *open_disk(char *name)
 	struct block_device *bdev;
 
 	/* TODO 4: get block device in exclusive mode */
+	bdev = blkdev_get_by_path(PHYSICAL_DISK_NAME, FMODE_READ | FMODE_WRITE | FMODE_EXCL, THIS_MODULE);
 
 	return bdev;
 }
@@ -72,12 +92,13 @@ static int __init relay_init(void)
 static void close_disk(struct block_device *bdev)
 {
 	/* TODO 4: put block device */
+	blkdev_put(bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
 }
 
 static void __exit relay_exit(void)
 {
 	/* TODO 5: send test write bio */
-
+	send_test_bio(phys_bdev, 1);
 	close_disk(phys_bdev);
 }
 
