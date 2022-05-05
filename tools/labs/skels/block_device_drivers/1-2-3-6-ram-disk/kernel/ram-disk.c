@@ -67,6 +67,11 @@ static void my_block_transfer(struct my_block_dev *dev, sector_t sector,
 		return;
 
 	/* TODO 3: read/write to dev buffer depending on dir */
+	if (dir == 0) {
+		memcpy(buffer, dev->data + offset, len);
+	} else if (dir == 1) {
+		memcpy(dev->data + offset, buffer, len);	
+	}
 }
 
 /* to transfer data using bio structures enable USE_BIO_TRANFER */
@@ -90,13 +95,30 @@ static blk_status_t my_block_request(struct blk_mq_hw_ctx *hctx,
 	/* TODO 2: start request processing. */
 	blk_mq_start_request(rq);
 	/* TODO 2: check fs request. Return if passthrough. */
-	blk_rq_is_passthrough(rq);
+	if (blk_rq_is_passthrough(rq))
+		return BLK_STS_OK;
 	/* TODO 2: print request information */
 	printk(KERN_INFO "sector: %llu, total data: %u, transfer data: %u, direction: %d\n" , blk_rq_pos(rq), blk_rq_bytes(rq), blk_rq_cur_bytes(rq), rq_data_dir(rq));
 #if USE_BIO_TRANSFER == 1
 	/* TODO 6: process the request by calling my_xfer_request */
 #else
-	/* TODO 3: process the request by calling my_block_transfer */
+
+	struct bio_vec bvec;
+	struct req_iterator iter;
+
+	rq_for_each_segment(bvec, rq, iter) {
+		sector_t sector = iter.iter.bi_sector;
+		char *buffer = kmap_atomic(bvec.bv_page);
+		unsigned long offset = bvec.bv_offset;
+		//size_t len = bvec.bv_len;
+		//int dir = bio_data_dir(iter.bio);
+
+		my_block_transfer(dev, blk_rq_pos(rq), blk_rq_cur_bytes(rq), buffer + offset, rq_data_dir(rq));
+
+		kunmap_atomic(buffer);
+	}
+
+	
 #endif
 
 	/* TODO 2: end request successfully */
