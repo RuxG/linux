@@ -4,4 +4,5 @@
 Ca urmare, acest tip de sistem de fisiere poate fi montat cu succes.
 
 5) Am definit structura inode_operations si functiile de creeare de director si de fisier uzual. Acestea creeaza un nou inode si un dentry asociat. Functia ce creeaza un director asociaza in plus inode-ului structura de tip dir_inode_operations. 
-
+6) Am definit structurile file_operations, inode_operations si address_space_operations (asociind functiilor imlementarile default). Acum ca sunt definite functiile de lucru pe fisier deschis (lseek, read, write, map), putem efectua operatii
+de scriere si citire pe fisier.
