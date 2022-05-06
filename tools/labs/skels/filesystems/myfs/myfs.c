@@ -28,12 +28,21 @@ static int myfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode);
 
 /* TODO 2: define super_operations structure */
 static const struct super_operations myfs_ops = {
-	.statfs         = simple_statfs,
-	.drop_inode     = generic_delete_inode,
+	.statfs		= simple_statfs,
+	.drop_inode	= generic_drop_inode,
 };
 
 static const struct inode_operations myfs_dir_inode_operations = {
 	/* TODO 5: Fill dir inode operations structure. */
+	.create		= myfs_create,
+	.mkdir		= myfs_mkdir,
+	.mknod		= myfs_mknod,
+	.lookup = simple_lookup,
+	.link = simple_link,
+	.unlink = simple_unlink,
+	.rename		= simple_rename,
+	.rmdir		= simple_rmdir,
+      //...
 };
 
 static const struct file_operations myfs_file_operations = {
@@ -63,12 +72,10 @@ struct inode *myfs_get_inode(struct super_block *sb, const struct inode *dir,
 	 *     - atime,ctime,mtime
 	 *     - ino
 	 */
-
+	inode_init_owner(inode, dir, mode);
+	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
+	//inode->i_ino = 1;
 	inode->i_ino = get_next_ino();
-	inode_init_owner(inode, NULL, mode);
-	inode->i_atime = current_time(inode);
-	inode->i_ctime = current_time(inode);
-	inode->i_mtime = current_time(inode);
 
 
 	/* TODO 5: Init i_ino using get_next_ino */
@@ -79,10 +86,12 @@ struct inode *myfs_get_inode(struct super_block *sb, const struct inode *dir,
 		/* TODO 3: set inode operations for dir inodes. */
 		inode->i_op = &simple_dir_inode_operations;
 		inode->i_fop = &simple_dir_operations;
+
 		/* TODO 5: use myfs_dir_inode_operations for inode
 		 * operations (i_op).
+		 
 		 */
-
+		inode->i_op = &myfs_dir_inode_operations;
 		/* TODO 3: directory inodes start off with i_nlink == 2 (for "." entry).
 		 * Directory link count should be incremented (use inc_nlink).
 		 */
@@ -98,11 +107,37 @@ struct inode *myfs_get_inode(struct super_block *sb, const struct inode *dir,
 
 /* TODO 5: Implement myfs_mknod, myfs_create, myfs_mkdir. */
 
+static int
+myfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev)
+{
+	struct inode * inode = myfs_get_inode(dir->i_sb, dir, mode);
+	int error = -ENOSPC;
+
+	if (inode) {
+		d_instantiate(dentry, inode);
+		dget(dentry);	/* Extra count - pin the dentry in core */
+		error = 0;
+		dir->i_mtime = dir->i_ctime = current_time(dir);
+	}
+	return error;
+}
+
+static int myfs_mkdir(struct inode * dir, struct dentry * dentry, umode_t mode)
+{
+	int retval = myfs_mknod(dir, dentry, mode | S_IFDIR, 0);
+	if (!retval)
+		inc_nlink(dir);
+	return retval;
+}
+
+static int myfs_create(struct inode *dir, struct dentry *dentry, umode_t mode, bool excl)
+{
+	return myfs_mknod(dir, dentry, mode | S_IFREG, 0);
+}
 static int myfs_fill_super(struct super_block *sb, void *data, int silent)
 {
 	struct inode *root_inode;
 	struct dentry *root_dentry;
-	
 
 	/* TODO 2: fill super_block
 	 *   - blocksize, blocksize_bits
@@ -110,13 +145,11 @@ static int myfs_fill_super(struct super_block *sb, void *data, int silent)
 	 *   - super operations
 	 *   - maxbytes
 	 */
-
-	//save_mount_options(sb, data);
+	sb->s_maxbytes = MAX_LFS_FILESIZE;
 	sb->s_blocksize = MYFS_BLOCKSIZE;
 	sb->s_blocksize_bits = MYFS_BLOCKSIZE_BITS;
 	sb->s_magic = MYFS_MAGIC;
 	sb->s_op = &myfs_ops;
-	sb->s_maxbytes = MAX_LFS_FILESIZE;
 
 	/* mode = directory & access rights (755) */
 	root_inode = myfs_get_inode(sb, NULL,
@@ -145,15 +178,14 @@ static struct dentry *myfs_mount(struct file_system_type *fs_type,
 {
 	/* TODO 1: call superblock mount function */
 	return mount_nodev(fs_type, flags, data, myfs_fill_super);
-
 }
 
 /* TODO 1: define file_system_type structure */
 static struct file_system_type myfs_fs_type = {
-        .name           = "myfs",
-        .mount          = myfs_mount,
-        .kill_sb        = kill_litter_super,
-        .fs_flags       = FS_USERNS_MOUNT,
+	.owner		= THIS_MODULE,
+	.name		= "myfs",
+	.mount		= myfs_mount,
+	.kill_sb	= kill_litter_super,
 };
 
 static int __init myfs_init(void)
@@ -175,7 +207,6 @@ static void __exit myfs_exit(void)
 	/* TODO 1: unregister */
 	unregister_filesystem(&myfs_fs_type);
 }
-
 
 module_init(myfs_init);
 module_exit(myfs_exit);

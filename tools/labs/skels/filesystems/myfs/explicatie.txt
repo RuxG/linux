@@ -3,3 +3,5 @@
 3) Am initializat inode-ul radacina, alocandu-i un numar de inode, file system uid si gid, si structurile inode_ops si fops.
 Ca urmare, acest tip de sistem de fisiere poate fi montat cu succes.
 
+5) Am definit structura inode_operations si functiile de creeare de director si de fisier uzual. Acestea creeaza un nou inode si un dentry asociat. Functia ce creeaza un director asociaza in plus inode-ului structura de tip dir_inode_operations. 
+
