@@ -1,0 +1,6 @@
+4) Daca in handler-ul de timer setam procesul ca fiind interuptibil si executam o operatie blocanta, driverul cauzeaza o eroare deoarece nu e permis sa se faca schedule in context intrerupere.
+
+5) Daca planificam ca operatiile de mai sus sa fie executate folosind deferred work, ele vor rula in context proces, deci putem executa operatii blocante.
+
+7) Inainte de a adauga task-struct-ul unui proces in lista, incrementez numarul de referinte la task_struct pentru a nu fi eliberata memoria, iar apoi dezactivez bottom-half-urile pentru a nu fi intrerupt de time handler (si a produce un livelock).
+   In time handler, protejez lista cu un spin lock si verific daca procesul s-a terminat, caz in care il elimin din lista, apoi reprogramez timer-ul. 
