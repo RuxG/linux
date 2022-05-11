@@ -1,0 +1,8 @@
+la scoaterea modulului, s-a afisat:
+before exiting: [ 
+(1, 4294907129) 
+(0, 4294907129) 
+(208, 4294907129) 
+(234, 4294907129) 
+]
+

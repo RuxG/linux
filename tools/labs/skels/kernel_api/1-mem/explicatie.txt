@@ -1,0 +1,1 @@
+zona de memorie alocata cu kmalloc este initializata cu Z

@@ -1,0 +1,1 @@
+-mesajul de eroare apare pt ca nu era inclus un header in fisierul sursa

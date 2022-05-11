@@ -1,0 +1,5 @@
+-kernel oops-ul apare pentru ca se incearca atribuirea unei valori intr-o adresa nemapata
+
+-adresa instructiunii care cauzeaza exceptia este data de registrul EIP:
+EIP: my_oops_init+0xd/0x22 [oops_mod]
+

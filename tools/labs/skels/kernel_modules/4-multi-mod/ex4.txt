@@ -1,0 +1,4 @@
+-pentru a obtine fisierul obiect, am modificat fisierul Kbuild astfel:
+obj-m = mod.o
+mod-y = mod1.o mod2.o
+

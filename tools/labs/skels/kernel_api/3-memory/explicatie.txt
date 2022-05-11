@@ -1,0 +1,6 @@
+La scoaterea modulului, s-au afisat urmatoarele:
+
+Current proc - pid: 295, timestamp: 231073
+Parent proc - pid: 208, timestamp: 231073
+Next proc - pid: 0, timestamp: 231073
+Next next proc - pid: 1, timestamp: 231073

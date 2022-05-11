@@ -1,0 +1,10 @@
+-am modificat codul sursa al modulului :) La inserarea lui, se afiseaza:
+Current process name: insmod, process pid: 297                                  
+Process list:                                                                   
+Process name: init, process pid: 1                                              
+Process name: kthreadd, process pid: 2                                          
+Process name: rcu_gp, process pid: 3                                            
+Process name: rcu_par_gp, process pid: 4                                        
+Process name: kworker/0:0, process pid: 5
+......
+Process name: insmod, process pid: 297                                       

@@ -1,0 +1,3 @@
+in varianta fara spin_lock: procesul poate fi intrerupt de sleep
+in varianta cu spin_lock: primim eroare la inserarea modulului: BUG: scheduling while atomic: insmod/234/0x00000002 - nu e permis sa apelam functii ce pot suspenda procesul curent intr-o sectiune atomica
+
