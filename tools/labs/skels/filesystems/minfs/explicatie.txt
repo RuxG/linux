@@ -1,11 +1,21 @@
 1) Am inregistrat tipul nou definit de sistem de fisiere, ca urmare el apare in /proc/filesystems dupa inserarea modulului. Folosesc mount_bdev
 pentru a specifica ca acest tip de sistem de fisiere are nevoie de un device de tip block. Montarea esueaza pentru ca inode-ul radacina nu este
 initializat.
+
 2) Populez structura super_block din kernel cu informatii aditionale din structura superblock de pe disc, verific ca numarul magic
 din structura de pe disc sa corespunda cu numarul magic definit in modul (pentru a verifica ca formatul discului este valid) si aloc
 si initializez o structura inode pentru root.
+
 3) In functia de alocare, aloc memorie pentru inode si initializez structurile interne ale structurii inode apeland functia "inode_init_once". In functia de 
 dealocare, dealoc memoria aferenta structurii inode.
+
 4) Functia minifs_iget opereaza astfel: intai se verifica daca structura inode a creeata anterior, caz in care se intoarce din cache. Apoi,
 se obtine blocul de pe disc care contine inode-uri si se ia pointerul catre inode-ul cautat de pe disc. Odata obtinut, se completeaza campurile structurii
 inode-ului cu informatiile din inode-ul de pe disc si se initializeaza operatiile de tip director daca este cazul.
+
+5) Functia minfs_readdir opereaza astfel: se obtine inode-ul corespunzator directorului prin care se doreste sa se itereze, apoi din inode se obtin informatiile despre el, de tip minfs_inode_info. 
+Din aceste informatii se extrage locatia de pe disc a blocului de date corespunzator inode-ului, iar apoi se citeste in pagina structurii buffer_head blocul de pe disc. 
+Se itereaza prin dentry-urile din bloc, iar daca inode-ul corespunzator este valid, se afiseaza informatii despre dentry.
+Comanda ls -l pe directorul root din sistemul de fisiere apeleaza readdir intai pe root, gasind un dentry pentru fisierul "a.txt", 
+iar apoi se apeleaza ls pe a.txt, care apeleaza la randul lui readdir, dar care esueaza pentru ca nu este implementata functia de lookup.
+
