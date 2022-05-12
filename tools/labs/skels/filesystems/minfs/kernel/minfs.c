@@ -157,29 +157,20 @@ static int minfs_readdir(struct file *filp, struct dir_context *ctx)
 	int over;
 	int err = 0;
 
-	/* TODO 5: Get inode of directory and container inode. */
 	inode = file_inode(filp);
 	mii = container_of(inode, struct minfs_inode_info, vfs_inode);
 
-	/* TODO 5: Get superblock from inode (i_sb). */
 	sb = inode->i_sb;
 
-	/* TODO 5: Read data block for directory inode. */
 	bh = sb_bread(sb, mii->data_block);
 
-	pr_info("Before iterations\n");
 	for (; ctx->pos < MINFS_NUM_ENTRIES; ctx->pos++) {
-		/* TODO 5: Data block contains an array of
-		 * "struct minfs_dir_entry". Use `de' for storing.
-		 */
+
 		de = (struct minfs_dir_entry *)(bh->b_data + ctx->pos * (MINFS_BLOCK_SIZE / MINFS_NUM_ENTRIES));
-		/* TODO 5: Step over empty entries (de->ino == 0). */
+	
 		if (de->ino == 0)
 			continue;
-		/*
-		 * Use `over` to store return value of dir_emit and exit
-		 * if required.
-		 */
+
 		over = dir_emit(ctx, de->name, MINFS_NAME_LEN, de->ino,
 				DT_UNKNOWN);
 		if (over) {
@@ -215,15 +206,17 @@ static struct minfs_dir_entry *minfs_find_entry(struct dentry *dentry,
 	struct minfs_dir_entry *de;
 	int i;
 
-	/* TODO 6: Read parent folder data block (contains dentries).
-	 * Fill bhp with return value.
-	 */
+	bh = sb_bread(sb, mii->data_block);
 
 	for (i = 0; i < MINFS_NUM_ENTRIES; i++) {
-		/* TODO 6: Traverse all entries, find entry by name
-		 * Use `de' to traverse. Use `final_de' to store dentry
-		 * found, if existing.
-		 */
+		de = (struct minfs_dir_entry *)(bh->b_data + i * (MINFS_BLOCK_SIZE / MINFS_NUM_ENTRIES));
+		if (de->ino == 0)
+			continue;
+		
+		if (strncmp(de->name, name, MINFS_NAME_LEN) == 0) {
+			final_de = de;
+			break;
+		} 
 	}
 
 	/* bh needs to be released by caller. */
@@ -233,8 +226,7 @@ static struct minfs_dir_entry *minfs_find_entry(struct dentry *dentry,
 static struct dentry *minfs_lookup(struct inode *dir,
 		struct dentry *dentry, unsigned int flags)
 {
-	/* TODO 6: Comment line. */
-	return simple_lookup(dir, dentry, flags);
+	//return simple_lookup(dir, dentry, flags);
 
 	struct super_block *sb = dir->i_sb;
 	struct minfs_dir_entry *de;

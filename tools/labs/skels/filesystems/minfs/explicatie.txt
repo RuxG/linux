@@ -19,3 +19,6 @@ Se itereaza prin dentry-urile din bloc, iar daca inode-ul corespunzator este val
 Comanda ls -l pe directorul root din sistemul de fisiere apeleaza readdir intai pe root, gasind un dentry pentru fisierul "a.txt", 
 iar apoi se apeleaza ls pe a.txt, care apeleaza la randul lui readdir, dar care esueaza pentru ca nu este implementata functia de lookup.
 
+6) Functia minfs_dir_entry opereaza similar: itereaza prin dentry-urile din data bloc-ul directorului si compara numele acestora cu numele dentry-ului pentru care se face lookup.
+Cum a putut fi extrasa structura minfs_dir_entry, se poate extrage inode-ul asociat, si astfel pot fi afisate metadatele fisierului prin comanda ls.
+
