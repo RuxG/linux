@@ -51,6 +51,7 @@ static const struct file_operations minfs_dir_operations = {
 static const struct inode_operations minfs_dir_inode_operations = {
 	.lookup		= minfs_lookup,
 	/* TODO 7: Use minfs_create as the create function. */
+	.create = minfs_create,
 };
 
 static const struct address_space_operations minfs_aops = {
@@ -285,14 +286,27 @@ static struct inode *minfs_new_inode(struct inode *dir)
 	int idx;
 
 	/* TODO 7: Find first available inode. */
+	idx = find_first_zero_bit(&sbi->imap, MINFS_NUM_INODES);
 
 	/* TODO 7: Mark the inode as used in the bitmap and mark
 	 * the superblock buffer head as dirty.
 	 */
-
+	set_bit(idx, &sbi->imap);
+	mark_buffer_dirty(sbi->sbh);
 	/* TODO 7: Call new_inode(), fill inode fields
 	 * and insert inode into inode hash table.
 	 */
+	inode = new_inode(sb);
+	if (!inode) {
+		return NULL;
+	}
+	inode_init_owner(inode, dir, 0);
+	inode->i_ino = idx;
+	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+	inode->i_mapping->a_ops = &minfs_aops;
+
+	insert_inode_hash(inode);
+	mark_inode_dirty(inode);
 
 	/* Actual writing to the disk will be done in minfs_write_inode,
 	 * which will be called at a later time.
@@ -314,15 +328,32 @@ static int minfs_add_link(struct dentry *dentry, struct inode *inode)
 	struct minfs_dir_entry *de;
 	int i;
 	int err = 0;
+	struct minfs_sb_info *sbi;
 
 	/* TODO 7: Get: directory inode (in inode); containing inode (in mii); superblock (in sb). */
+	dir = d_inode(dentry->d_parent);
+	mii = container_of(dir, struct minfs_inode_info, vfs_inode);
+	sb = dir->i_sb;
+	sbi = sb->s_fs_info;
 
 	/* TODO 7: Read dir data block (use sb_bread). */
-
+	bh = sb_bread(sb, mii->data_block);
+	
 	/* TODO 7: Find first free dentry (de->ino == 0). */
-
-	/* TODO 7: Place new entry in the available slot. Mark buffer_head
-	 * as dirty. */
+	for (i = 0; i < MINFS_NUM_ENTRIES; i++) {
+		de = (struct minfs_dir_entry *)(bh->b_data + i * (MINFS_BLOCK_SIZE / MINFS_NUM_ENTRIES));
+		if (de->ino == 0) {
+			/* TODO 7: Place new entry in the available slot. Mark buffer_head
+	 		* as dirty. */
+		 	de->ino = inode->i_ino;
+			memcpy(de->name, dentry->d_name.name, MINFS_NAME_LEN);
+			mark_buffer_dirty(sbi->sbh);
+			break;
+		}
+	}
+	if (i == MINFS_NUM_ENTRIES) {
+		err = -ENOSPC;
+	}
 
 out:
 	brelse(bh);

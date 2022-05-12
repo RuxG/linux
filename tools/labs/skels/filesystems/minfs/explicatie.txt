@@ -22,3 +22,6 @@ iar apoi se apeleaza ls pe a.txt, care apeleaza la randul lui readdir, dar care 
 6) Functia minfs_dir_entry opereaza similar: itereaza prin dentry-urile din data bloc-ul directorului si compara numele acestora cu numele dentry-ului pentru care se face lookup.
 Cum a putut fi extrasa structura minfs_dir_entry, se poate extrage inode-ul asociat, si astfel pot fi afisate metadatele fisierului prin comanda ls.
 
+7) Functia minfs_new_inode creeaza si initializeaza un nou inode. Primul pas este sa cautam in imap prima pozitie libera, folosind operatii pe biti.
+Se aloca un nou inode si se initializeaza. Urmatorul pas este apelarea functiei minfs_add_link, care adauga in blocul de date al directorului parinte, dentry-ul inode-ului nou creat.
+
