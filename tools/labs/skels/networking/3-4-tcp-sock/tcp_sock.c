@@ -71,23 +71,26 @@ int __init my_tcp_sock_init(void)
 		goto out_release;
 	
 	/* TODO 1: start listening */
-	err = sock_create_lite(AF_INET, SOCK_STREAM, IPPROTO_TCP, &new_sock);
-	if (err)
-		goto out_release;
-		
-	newsock->ops = sock->ops;
-
+	
 	err = sock->ops->listen(sock, LISTEN_BACKLOG);
 	if (err)
 		goto out_release;
 
 	/* TODO 2: create new socket for the accepted connection */
+	err = sock_create_lite(AF_INET, SOCK_STREAM, IPPROTO_TCP, &new_sock);
+	if (err)
+		goto out_release;
+		
+	new_sock->ops = sock->ops;
+
 	/* TODO 2: accept a connection */
 	err = sock->ops->accept(sock, new_sock, 0, true);
 	if (err)
 		goto out_release_new_sock;
+
 	/* TODO 2: get the address of the peer and print it */
-	
+	sock->ops->getname(new_sock, (struct sockaddr *) (&raddr), 1);
+	print_sock_address(raddr);
 	return 0;
 
 
